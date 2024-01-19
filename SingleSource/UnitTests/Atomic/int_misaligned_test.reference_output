@@ -1,0 +1,53 @@
+10 threads; 1000000 iterations each; total of 10000000
+Testing misaligned uint32_t
+FETCH ADD: atomic: 660000000 nonatomic: 659995578
+FETCH SUB: atomic: 0 nonatomic: 5346
+FETCH AND: atomic: 10000000 nonatomic: 9999449
+FETCH OR: atomic: 10000000 nonatomic: 9999455
+FETCH XOR: atomic: 0 nonatomic: 249934
+XCHG: atomic: 660000000 nonatomic: 330000000
+XCHG_N: atomic: 660000000 nonatomic: 330000000
+CMPXCHG: atomic: 660000000 nonatomic: 659995512
+CMPXCHG_N: atomic: 660000000 nonatomic: 659995446
+Testing misaligned uint64_t
+FETCH ADD: atomic: 2845963891900000000 nonatomic: 2845910387778832280
+FETCH SUB: atomic: 0 nonatomic: 50658157275820
+FETCH AND: atomic: 10000000 nonatomic: 9999942
+FETCH OR: atomic: 10000000 nonatomic: 9999564
+FETCH XOR: atomic: 0 nonatomic: 136581
+XCHG: atomic: 2845963891900000000 nonatomic: 1422981945950000000
+XCHG_N: atomic: 2845963891900000000 nonatomic: 711490972975000000
+CMPXCHG: atomic: 2845963891900000000 nonatomic: 2845945108538313460
+CMPXCHG_N: atomic: 2845963891900000000 nonatomic: 2845920064056064740
+Testing misaligned int32_t
+FETCH ADD: atomic: 660000000 nonatomic: 659969244
+FETCH SUB: atomic: 0 nonatomic: 5544
+FETCH AND: atomic: 10000000 nonatomic: 9999488
+FETCH OR: atomic: 10000000 nonatomic: 9999984
+FETCH XOR: atomic: 0 nonatomic: 245133
+XCHG: atomic: 660000000 nonatomic: 330000000
+XCHG_N: atomic: 660000000 nonatomic: 330000000
+CMPXCHG: atomic: 660000000 nonatomic: 659995446
+CMPXCHG_N: atomic: 660000000 nonatomic: 659995974
+Testing misaligned int64_t
+FETCH ADD: atomic: 2845963891900000000 nonatomic: 2845926609773016110
+FETCH SUB: atomic: 0 nonatomic: 27036656973050
+FETCH AND: atomic: 10000000 nonatomic: 9999577
+FETCH OR: atomic: 10000000 nonatomic: 9999913
+FETCH XOR: atomic: 0 nonatomic: 938046
+XCHG: atomic: 2845963891900000000 nonatomic: 1707578335140000000
+XCHG_N: atomic: 2845963891900000000 nonatomic: 1707578335140000000
+CMPXCHG: atomic: 2845963891900000000 nonatomic: 2845947954502205360
+CMPXCHG_N: atomic: 2845963891900000000 nonatomic: 2845936001453859380
+Testing misaligned __uint128_t
+XCHG: atomic (top 8 bytes): 2588389 nonatomic (top 8 bytes): 776516
+XCHG_N: atomic (top 8 bytes): 2588389 nonatomic (top 8 bytes): 1294194
+CMPXCHG: atomic (top 8 bytes): 2588389 nonatomic (top 8 bytes): 2588211
+CMPXCHG_N: atomic (top 8 bytes): 2588389 nonatomic (top 8 bytes): 2588245
+Testing misaligned __int128_t
+XCHG: atomic (top 8 bytes): 2588389 nonatomic (top 8 bytes): 1811872
+XCHG_N: atomic (top 8 bytes): 2588389 nonatomic (top 8 bytes): 776516
+CMPXCHG: atomic (top 8 bytes): 2588389 nonatomic (top 8 bytes): 2588272
+CMPXCHG_N: atomic (top 8 bytes): 2588389 nonatomic (top 8 bytes): 2588341
+PASSED
+exit 0
