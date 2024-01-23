@@ -60,9 +60,8 @@ void looper_misshapen_xchg_atomic(misshapen<N> *amis, int model) {
   unsigned char error[N] = {};
   misshapen<N> next, result;
   __atomic_load(amis, &next, model);
-  for (int k = 0; k < N; ++k) {
+  for (int k = 0; k < N; ++k)
     next.v[k]++;
-  }
   for (int n = 0; n < kIterations; ++n) {
     __atomic_exchange(amis, &next, &result, model);
     for (int k = 0; k < N; ++k) {
@@ -76,9 +75,8 @@ void looper_misshapen_xchg_atomic(misshapen<N> *amis, int model) {
   __atomic_load(amis, &expected, model);
   do {
     desired = expected;
-    for (int k = 0; k < N; ++k) {
+    for (int k = 0; k < N; ++k)
       desired.v[k] -= error[k];
-    }
   } while (!__atomic_compare_exchange(amis, &expected, &desired, true,
                                       model, model));
 }
@@ -88,9 +86,8 @@ void looper_misshapen_xchg_nonatomic(misshapen<N> &mmis, int model) {
   unsigned char error[N] = {};
   misshapen<N> next, result;
   __atomic_load(&mmis, &next, model);
-  for (int k = 0; k < N; ++k) {
+  for (int k = 0; k < N; ++k)
     next.v[k]++;
-  }
   for (int n = 0; n < kIterations; ++n) {
     result = mmis;
     mmis = next;
@@ -105,9 +102,8 @@ void looper_misshapen_xchg_nonatomic(misshapen<N> &mmis, int model) {
   __atomic_load(&mmis, &expected, model);
   do {
     desired = expected;
-    for (int k = 0; k < N; ++k) {
+    for (int k = 0; k < N; ++k)
       desired.v[k] -= error[k];
-    }
   } while (!__atomic_compare_exchange(&mmis, &expected, &desired, true,
                                       model, model));
 }
@@ -119,37 +115,29 @@ void test_misshapen_xchg() {
   for (int model : atomic_exchange_models) {
     misshapen<N> amis = {};
     misshapen<N> mmis = {};
-    for (int n = 0; n < kThreads; ++n) {
+    for (int n = 0; n < kThreads; ++n)
       pool.emplace_back(looper_misshapen_xchg_atomic<N>, &amis, model);
-    }
-    for (int n = 0; n < kThreads; ++n) {
+    for (int n = 0; n < kThreads; ++n)
       pool[n].join();
-    }
     pool.clear();
-    for (int n = 0; n < kThreads; ++n) {
+    for (int n = 0; n < kThreads; ++n)
       pool.emplace_back(looper_misshapen_xchg_nonatomic<N>, std::ref(mmis),
                         model);
-    }
-    for (int n = 0; n < kThreads; ++n) {
+    for (int n = 0; n < kThreads; ++n)
       pool[n].join();
-    }
     pool.clear();
     std::cout << "XCHG: ";
     std::cout << "atomic: ";
-    for (int n = 0; n < N; ++n) {
+    for (int n = 0; n < N; ++n)
       std::cout << unsigned(amis.v[n]) << " ";
-    }
     std::cout << "\n      ";
     std::cout << "nonatomic: ";
-    for (int n = 0; n < N; ++n) {
+    for (int n = 0; n < N; ++n)
       std::cout << unsigned(mmis.v[n]) << " ";
-    }
     std::cout << "\n";
-    for (int n = 0; n < N; ++n) {
-      if (amis.v[n] != kExpected % (1 << (8 * sizeof(amis.v[0])))) {
+    for (int n = 0; n < N; ++n)
+      if (amis.v[n] != kExpected % (1 << (8 * sizeof(amis.v[0]))))
         fail();
-      }
-    }
   }
 }
 
@@ -161,14 +149,12 @@ void looper_misshapen_cmpxchg(misshapen<N> *amis, misshapen<N> &mmis,
     misshapen<N> desired, expected = {};
     do {
       desired = expected;
-      for (int k = 0; k < N; ++k) {
+      for (int k = 0; k < N; ++k)
         desired.v[k]++;
-      }
     } while (!__atomic_compare_exchange(amis, &expected, &desired, true,
                                         success_model, fail_model));
-    for (int k = 0; k < N; ++k) {
+    for (int k = 0; k < N; ++k)
       mmis.v[k]++;
-    }
   }
 }
 
@@ -180,30 +166,24 @@ void test_misshapen_cmpxchg() {
     for (int fail_model : atomic_compare_exchange_models) {
       misshapen<N> amis = {};
       misshapen<N> mmis = {};
-      for (int n = 0; n < kThreads; ++n) {
+      for (int n = 0; n < kThreads; ++n)
         pool.emplace_back(looper_misshapen_cmpxchg<N>, &amis, std::ref(mmis),
                           success_model, fail_model);
-      }
-      for (int n = 0; n < kThreads; ++n) {
+      for (int n = 0; n < kThreads; ++n)
         pool[n].join();
-      }
       pool.clear();
       std::cout << "CMPXCHG: ";
       std::cout << "atomic: ";
-      for (int n = 0; n < N; ++n) {
+      for (int n = 0; n < N; ++n)
         std::cout << unsigned(amis.v[n]) << " ";
-      }
       std::cout << "\n      ";
       std::cout << "nonatomic: ";
-      for (int n = 0; n < N; ++n) {
+      for (int n = 0; n < N; ++n)
         std::cout << unsigned(mmis.v[n]) << " ";
-      }
       std::cout << "\n";
-      for (int n = 0; n < N; ++n) {
-        if (amis.v[n] != kExpected % (1 << (8 * sizeof(amis.v[0])))) {
+      for (int n = 0; n < N; ++n)
+        if (amis.v[n] != kExpected % (1 << (8 * sizeof(amis.v[0]))))
           fail();
-        }
-      }
     }
   }
 }

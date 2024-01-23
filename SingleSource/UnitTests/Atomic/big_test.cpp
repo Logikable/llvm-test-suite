@@ -50,26 +50,24 @@
 #include "util.h"
 
 static constexpr int kBigSize = 10;
-struct big {
+struct big_t {
   int v[kBigSize];
 };
 
 // The big struct cmpxchg test is identical to the numeric cmpxchg test, except
 // each element of the underlying array is incremented.
-void looper_big_cmpxchg(big *abig, big &bbig, int success_model,
+void looper_big_cmpxchg(big_t *abig, big_t &bbig, int success_model,
                         int fail_model) {
   for (int n = 0; n < kIterations; ++n) {
-    big desired, expected = {};
+    big_t desired, expected = {};
     do {
       desired = expected;
-      for (int k = 0; k < kBigSize; ++k) {
+      for (int k = 0; k < kBigSize; ++k)
         desired.v[k]++;
-      }
     } while (!__atomic_compare_exchange(abig, &expected, &desired, true,
                                         success_model, fail_model));
-    for (int k = 0; k < kBigSize; ++k) {
+    for (int k = 0; k < kBigSize; ++k)
       bbig.v[k]++;
-    }
   }
 }
 
@@ -78,32 +76,26 @@ void test_big_cmpxchg() {
 
   for (int success_model : atomic_compare_exchange_models) {
     for (int fail_model : atomic_compare_exchange_models) {
-      big abig = {};
-      big bbig = {};
-      for (int n = 0; n < kThreads; ++n) {
+      big_t abig = {};
+      big_t bbig = {};
+      for (int n = 0; n < kThreads; ++n)
         pool.emplace_back(looper_big_cmpxchg, &abig, std::ref(bbig),
                           success_model, fail_model);
-      }
-      for (int n = 0; n < kThreads; ++n) {
+      for (int n = 0; n < kThreads; ++n)
         pool[n].join();
-      }
       pool.clear();
       std::cout << "CMPXCHG: ";
       std::cout << "atomic: ";
-      for (int n = 0; n < kBigSize; ++n) {
+      for (int n = 0; n < kBigSize; ++n)
         std::cout << abig.v[n] << " ";
-      }
       std::cout << "\n      ";
       std::cout << "nonatomic: ";
-      for (int n = 0; n < kBigSize; ++n) {
+      for (int n = 0; n < kBigSize; ++n)
         std::cout << bbig.v[n] << " ";
-      }
       std::cout << "\n";
-      for (int n = 0; n < kBigSize; ++n) {
-        if (lt(abig.v[n], bbig.v[n]) || abig.v[n] != kExpected) {
+      for (int n = 0; n < kBigSize; ++n)
+        if (lt(abig.v[n], bbig.v[n]) || abig.v[n] != kExpected)
           fail();
-        }
-      }
     }
   }
 }

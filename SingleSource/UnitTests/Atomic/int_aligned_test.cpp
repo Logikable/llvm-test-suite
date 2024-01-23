@@ -71,19 +71,16 @@ void test_int_fetch_add(T &aint, T &iint) {
   for (int model : atomic_fetch_models) {
     aint = 0;
     iint = 0;
-    for (int n = 0; n < kThreads; ++n) {
+    for (int n = 0; n < kThreads; ++n)
       pool.emplace_back(looper_int_fetch_add<T>, &aint, std::ref(iint), model);
-    }
-    for (int n = 0; n < kThreads; ++n) {
+    for (int n = 0; n < kThreads; ++n)
       pool[n].join();
-    }
     pool.clear();
     std::cout << "FETCH ADD: "
               << "atomic: " << aint << " "
               << "nonatomic: " << iint << "\n";
-    if (lt(aint, iint) || aint != val * kExpected) {
+    if (lt(aint, iint) || aint != val * kExpected)
       fail();
-    }
   }
 }
 
@@ -103,19 +100,16 @@ void test_int_fetch_sub(T &aint, T &iint) {
   for (int model : atomic_fetch_models) {
     aint = val * kExpected;
     iint = val * kExpected;
-    for (int n = 0; n < kThreads; ++n) {
+    for (int n = 0; n < kThreads; ++n)
       pool.emplace_back(looper_int_fetch_sub<T>, &aint, std::ref(iint), model);
-    }
-    for (int n = 0; n < kThreads; ++n) {
+    for (int n = 0; n < kThreads; ++n)
       pool[n].join();
-    }
     pool.clear();
     std::cout << "FETCH SUB: "
               << "atomic: " << aint << " "
               << "nonatomic: " << iint << "\n";
-    if (lt(iint, aint) || aint != 0) {
+    if (lt(iint, aint) || aint != 0)
       fail();
-    }
   }
 }
 
@@ -154,20 +148,17 @@ void test_int_fetch_and(T &aint, T &iint) {
   for (int model : atomic_fetch_models) {
     T acnt = 0, icnt = 0;
     aint = ~0, iint = ~0;
-    for (int n = 0; n < kThreads; ++n) {
+    for (int n = 0; n < kThreads; ++n)
       pool.emplace_back(looper_int_fetch_and<T>, n, &aint, std::ref(iint),
                         &acnt, &icnt, model);
-    }
-    for (int n = 0; n < kThreads; ++n) {
+    for (int n = 0; n < kThreads; ++n)
       pool[n].join();
-    }
     pool.clear();
     std::cout << "FETCH AND: "
               << "atomic: " << acnt << " "
               << "nonatomic: " << icnt << "\n";
-    if (acnt != kExpected) {
+    if (acnt != kExpected)
       fail();
-    }
   }
 }
 
@@ -199,20 +190,17 @@ void test_int_fetch_or(T &aint, T &iint) {
   for (int model : atomic_fetch_models) {
     T acnt = 0, icnt = 0;
     aint = 0, iint = 0;
-    for (int n = 0; n < kThreads; ++n) {
+    for (int n = 0; n < kThreads; ++n)
       pool.emplace_back(looper_int_fetch_or<T>, n, &aint, std::ref(iint),
                         &acnt, &icnt, model);
-    }
-    for (int n = 0; n < kThreads; ++n) {
+    for (int n = 0; n < kThreads; ++n)
       pool[n].join();
-    }
     pool.clear();
     std::cout << "FETCH OR: "
               << "atomic: " << acnt << " "
               << "nonatomic: " << icnt << "\n";
-    if (acnt != kExpected) {
+    if (acnt != kExpected)
       fail();
-    }
   }
 }
 
@@ -230,19 +218,16 @@ void test_int_fetch_xor(T &aint, T &iint) {
   for (int model : atomic_fetch_models) {
     aint = 0;
     iint = 0;
-    for (int n = 0; n < kThreads; ++n) {
+    for (int n = 0; n < kThreads; ++n)
       pool.emplace_back(looper_int_fetch_xor<T>, &aint, std::ref(iint), model);
-    }
-    for (int n = 0; n < kThreads; ++n) {
+    for (int n = 0; n < kThreads; ++n)
       pool[n].join();
-    }
     pool.clear();
     std::cout << "FETCH XOR: "
               << "atomic: " << aint << " "
               << "nonatomic: " << iint << "\n";
-    if (aint != 0) {
+    if (aint != 0)
       fail();
-    }
   }
 }
 
@@ -253,26 +238,21 @@ void test_int_xchg(T &aint, T &iint) {
   for (int model : atomic_exchange_models) {
     aint = 0;
     iint = 0;
-    for (int n = 0; n < kThreads; ++n) {
+    for (int n = 0; n < kThreads; ++n)
       pool.emplace_back(looper_numeric_xchg_atomic<T>, &aint, model);
-    }
-    for (int n = 0; n < kThreads; ++n) {
+    for (int n = 0; n < kThreads; ++n)
       pool[n].join();
-    }
     pool.clear();
-    for (int n = 0; n < kThreads; ++n) {
+    for (int n = 0; n < kThreads; ++n)
       pool.emplace_back(looper_numeric_xchg_nonatomic<T>, std::ref(iint),
                         model);
-    }
-    for (int n = 0; n < kThreads; ++n) {
+    for (int n = 0; n < kThreads; ++n)
       pool[n].join();
-    }
     pool.clear();
     std::cout << "XCHG: ";
     print_int(aint, iint);
-    if (lt(aint, iint) || aint != val * kExpected) {
+    if (lt(aint, iint) || aint != val * kExpected)
       fail();
-    }
   }
 }
 

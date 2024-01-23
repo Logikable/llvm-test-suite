@@ -79,20 +79,17 @@ void test_int_misaligned_fetch_add(misaligned<T> &astruct,
   for (int model : atomic_fetch_models) {
     astruct.data = 0;
     istruct.data = 0;
-    for (int n = 0; n < kThreads; ++n) {
+    for (int n = 0; n < kThreads; ++n)
       pool.emplace_back(looper_int_misaligned_fetch_add<T>, std::ref(astruct),
                         std::ref(istruct), model);
-    }
-    for (int n = 0; n < kThreads; ++n) {
+    for (int n = 0; n < kThreads; ++n)
       pool[n].join();
-    }
     pool.clear();
     std::cout << "FETCH ADD: "
               << "atomic: " << astruct.data << " "
               << "nonatomic: " << istruct.data << "\n";
-    if (lt(astruct.data, istruct.data) || astruct.data != val * kExpected) {
+    if (lt(astruct.data, istruct.data) || astruct.data != val * kExpected)
       fail();
-    }
   }
 }
 
@@ -114,20 +111,17 @@ void test_int_misaligned_fetch_sub(misaligned<T> &astruct,
   for (int model : atomic_fetch_models) {
     astruct.data = val * kExpected;
     istruct.data = val * kExpected;
-    for (int n = 0; n < kThreads; ++n) {
+    for (int n = 0; n < kThreads; ++n)
       pool.emplace_back(looper_int_misaligned_fetch_sub<T>, std::ref(astruct),
                         std::ref(istruct), model);
-    }
-    for (int n = 0; n < kThreads; ++n) {
+    for (int n = 0; n < kThreads; ++n)
       pool[n].join();
-    }
     pool.clear();
     std::cout << "FETCH SUB: "
               << "atomic: " << astruct.data << " "
               << "nonatomic: " << istruct.data << "\n";
-    if (lt(istruct.data, astruct.data) || astruct.data != 0) {
+    if (lt(istruct.data, astruct.data) || astruct.data != 0)
       fail();
-    }
   }
 }
 
@@ -144,7 +138,7 @@ void __attribute__((optnone)) looper_int_misaligned_fetch_and(
       __atomic_fetch_add(acnt, 1, model);
       do {
         desired = expected | mask;
-      } while (!__atomic_compare_exchange(&astruct.data, &expected, &desired, 
+      } while (!__atomic_compare_exchange(&astruct.data, &expected, &desired,
                                           true, model, model));
     }
     istruct.data &= ~mask;
@@ -162,21 +156,18 @@ void test_int_misaligned_fetch_and(misaligned<T> &astruct,
   for (int model : atomic_fetch_models) {
     T acnt = 0, icnt = 0;
     astruct.data = ~0, istruct.data = ~0;
-    for (int n = 0; n < kThreads; ++n) {
+    for (int n = 0; n < kThreads; ++n)
       pool.emplace_back(looper_int_misaligned_fetch_and<T>, n,
                         std::ref(astruct), std::ref(istruct),
                         &acnt, &icnt, model);
-    }
-    for (int n = 0; n < kThreads; ++n) {
+    for (int n = 0; n < kThreads; ++n)
       pool[n].join();
-    }
     pool.clear();
     std::cout << "FETCH AND: "
               << "atomic: " << acnt << " "
               << "nonatomic: " << icnt << "\n";
-    if (acnt != kExpected) {
+    if (acnt != kExpected)
       fail();
-    }
   }
 }
 
@@ -211,21 +202,18 @@ void test_int_misaligned_fetch_or(misaligned<T> &astruct,
   for (int model : atomic_fetch_models) {
     T acnt = 0, icnt = 0;
     astruct.data = 0, istruct.data = 0;
-    for (int n = 0; n < kThreads; ++n) {
+    for (int n = 0; n < kThreads; ++n)
       pool.emplace_back(looper_int_misaligned_fetch_or<T>, n,
                         std::ref(astruct), std::ref(istruct),
                         &acnt, &icnt, model);
-    }
-    for (int n = 0; n < kThreads; ++n) {
+    for (int n = 0; n < kThreads; ++n)
       pool[n].join();
-    }
     pool.clear();
     std::cout << "FETCH OR: "
               << "atomic: " << acnt << " "
               << "nonatomic: " << icnt << "\n";
-    if (acnt != kExpected) {
+    if (acnt != kExpected)
       fail();
-    }
   }
 }
 
@@ -245,20 +233,17 @@ void test_int_misaligned_fetch_xor(misaligned<T> &astruct,
   for (int model : atomic_fetch_models) {
     astruct.data = 0;
     istruct.data = 0;
-    for (int n = 0; n < kThreads; ++n) {
+    for (int n = 0; n < kThreads; ++n)
       pool.emplace_back(looper_int_misaligned_fetch_xor<T>, std::ref(astruct),
                         std::ref(istruct), model);
-    }
-    for (int n = 0; n < kThreads; ++n) {
+    for (int n = 0; n < kThreads; ++n)
       pool[n].join();
-    }
     pool.clear();
     std::cout << "FETCH XOR: "
               << "atomic: " << astruct.data << " "
               << "nonatomic: " << istruct.data << "\n";
-    if (astruct.data != 0) {
+    if (astruct.data != 0)
       fail();
-    }
   }
 }
 
@@ -301,27 +286,22 @@ void test_int_misaligned_xchg(misaligned<T> &astruct, misaligned<T> &istruct) {
   for (int model : atomic_exchange_models) {
     astruct.data = 0;
     istruct.data = 0;
-    for (int n = 0; n < kThreads; ++n) {
+    for (int n = 0; n < kThreads; ++n)
       pool.emplace_back(looper_int_misaligned_xchg_atomic<T>, std::ref(astruct),
                         model);
-    }
-    for (int n = 0; n < kThreads; ++n) {
+    for (int n = 0; n < kThreads; ++n)
       pool[n].join();
-    }
     pool.clear();
-    for (int n = 0; n < kThreads; ++n) {
+    for (int n = 0; n < kThreads; ++n)
       pool.emplace_back(looper_int_misaligned_xchg_nonatomic<T>,
                         std::ref(istruct), model);
-    }
-    for (int n = 0; n < kThreads; ++n) {
+    for (int n = 0; n < kThreads; ++n)
       pool[n].join();
-    }
     pool.clear();
     std::cout << "XCHG: ";
     print_int(astruct.data, istruct.data);
-    if (lt(astruct.data, istruct.data) || astruct.data != val * kExpected) {
+    if (lt(astruct.data, istruct.data) || astruct.data != val * kExpected)
       fail();
-    }
   }
 }
 
@@ -348,27 +328,22 @@ void test_int_misaligned_xchg_n(misaligned<T> &astruct,
   for (int model : atomic_exchange_models) {
     astruct.data = 0;
     istruct.data = 0;
-    for (int n = 0; n < kThreads; ++n) {
+    for (int n = 0; n < kThreads; ++n)
       pool.emplace_back(looper_int_misaligned_xchg_n<T>, std::ref(astruct),
                         model);
-    }
-    for (int n = 0; n < kThreads; ++n) {
+    for (int n = 0; n < kThreads; ++n)
       pool[n].join();
-    }
     pool.clear();
-    for (int n = 0; n < kThreads; ++n) {
+    for (int n = 0; n < kThreads; ++n)
       pool.emplace_back(looper_int_misaligned_xchg_nonatomic<T>,
                         std::ref(istruct), model);
-    }
-    for (int n = 0; n < kThreads; ++n) {
+    for (int n = 0; n < kThreads; ++n)
       pool[n].join();
-    }
     pool.clear();
     std::cout << "XCHG_N: ";
     print_int(astruct.data, istruct.data);
-    if (lt(astruct.data, istruct.data) || astruct.data != val * kExpected) {
+    if (lt(astruct.data, istruct.data) || astruct.data != val * kExpected)
       fail();
-    }
   }
 }
 
@@ -397,20 +372,17 @@ void test_int_misaligned_cmpxchg(misaligned<T> &astruct,
     for (int fail_model : atomic_compare_exchange_models) {
       astruct.data = 0;
       istruct.data = 0;
-      for (int n = 0; n < kThreads; ++n) {
+      for (int n = 0; n < kThreads; ++n)
         pool.emplace_back(looper_int_misaligned_cmpxchg<T>, std::ref(astruct),
                           std::ref(istruct), success_model, fail_model);
-      }
-      for (int n = 0; n < kThreads; ++n) {
+      for (int n = 0; n < kThreads; ++n)
         pool[n].join();
-      }
       pool.clear();
       std::cout << "CMPXCHG: ";
       print_int(astruct.data, istruct.data);
       if (lt(astruct.data, istruct.data) ||
-          astruct.data != static_cast<T>(val) * kExpected) {
+          astruct.data != static_cast<T>(val) * kExpected)
         fail();
-      }
     }
   }
 }
@@ -440,20 +412,17 @@ void test_int_misaligned_cmpxchg_n(misaligned<T> &astruct,
     for (int fail_model : atomic_compare_exchange_models) {
       astruct.data = 0;
       istruct.data = 0;
-      for (int n = 0; n < kThreads; ++n) {
+      for (int n = 0; n < kThreads; ++n)
         pool.emplace_back(looper_int_misaligned_cmpxchg_n<T>, std::ref(astruct),
                           std::ref(istruct), success_model, fail_model);
-      }
-      for (int n = 0; n < kThreads; ++n) {
+      for (int n = 0; n < kThreads; ++n)
         pool[n].join();
-      }
       pool.clear();
       std::cout << "CMPXCHG_N: ";
       print_int(astruct.data, istruct.data);
       if (lt(astruct.data, istruct.data) ||
-          astruct.data != static_cast<T>(val) * kExpected) {
+          astruct.data != static_cast<T>(val) * kExpected)
         fail();
-      }
     }
   }
 }

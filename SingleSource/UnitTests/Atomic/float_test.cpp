@@ -61,28 +61,23 @@ void test_float_scalar_xchg() {
   for (int model : atomic_exchange_models) {
     T afloat = 0;
     T ffloat = 0;
-    for (int n = 0; n < kThreads; ++n) {
+    for (int n = 0; n < kThreads; ++n)
       pool.emplace_back(looper_numeric_xchg_atomic<T>, &afloat, model);
-    }
-    for (int n = 0; n < kThreads; ++n) {
+    for (int n = 0; n < kThreads; ++n)
       pool[n].join();
-    }
     pool.clear();
-    for (int n = 0; n < kThreads; ++n) {
+    for (int n = 0; n < kThreads; ++n)
       pool.emplace_back(looper_numeric_xchg_nonatomic<T>, std::ref(ffloat),
                         model);
-    }
-    for (int n = 0; n < kThreads; ++n) {
+    for (int n = 0; n < kThreads; ++n)
       pool[n].join();
-    }
     pool.clear();
     std::cout << "SCALAR (FETCH ADD): "
               << "atomic: " << afloat << " "
               << "nonatomic: " << ffloat << "\n";
     if (lt(afloat, ffloat) || afloat < expected * (1 - kEpsilon) ||
-        afloat > expected * (1 + kEpsilon)) {
+        afloat > expected * (1 + kEpsilon))
       fail();
-    }
   }
 }
 
@@ -97,26 +92,23 @@ void test_float_scalar_cmpxchg() {
     for (int fail_model : atomic_compare_exchange_models) {
       T afloat = 0;
       T ffloat = 0;
-      for (int n = 0; n < kThreads; ++n) {
+      for (int n = 0; n < kThreads; ++n)
         pool.emplace_back(looper_numeric_cmpxchg<T>, &afloat, std::ref(ffloat),
                           success_model, fail_model);
-      }
-      for (int n = 0; n < kThreads; ++n) {
+      for (int n = 0; n < kThreads; ++n)
         pool[n].join();
-      }
       pool.clear();
       std::cout << "SCALAR (FETCH ADD): "
                 << "atomic: " << afloat << " "
                 << "nonatomic: " << ffloat << "\n";
       if (lt(afloat, ffloat) || afloat < expected * (1 - kEpsilon) ||
-          afloat > expected * (1 + kEpsilon)) {
+          afloat > expected * (1 + kEpsilon))
         fail();
-      }
     }
   }
 }
 
-void test_float() {
+void test_floating_point() {
   printf("Testing float\n");
   test_float_scalar_xchg<float>();
   test_float_scalar_cmpxchg<float>();
@@ -130,6 +122,6 @@ int main() {
   printf("%d threads; %d iterations each; total of %d\n", kThreads, kIterations,
          kExpected);
 
-  test_float();
+  test_floating_point();
   printf("PASSED\n");
 }
