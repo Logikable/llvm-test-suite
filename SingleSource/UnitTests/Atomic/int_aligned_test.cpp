@@ -52,8 +52,20 @@
 #include <thread>
 #include <vector>
 
+#include "gtest/gtest.h"
 #include "numeric.h"
 #include "util.h"
+
+template <typename T>
+class IntAlignedTest : public ::testing::Test {};
+using IntAlignedTestTypes = ::testing::Types<
+    uint32_t, int32_t, uint64_t, int64_t, __uint128_t, __int128_t>;
+TYPED_TEST_SUITE(IntAlignedTest, IntAlignedTestTypes);
+
+template <typename T>
+class ALUAlignedTest : public IntAlignedTest<T> {};
+using ALUTestTypes = ::testing::Types<uint32_t, int32_t, uint64_t, int64_t>;
+TYPED_TEST_SUITE(ALUAlignedTest, ALUTestTypes);
 
 template <typename T>
 void looper_int_fetch_add(T *aint, T &iint, int model) {
@@ -64,23 +76,22 @@ void looper_int_fetch_add(T *aint, T &iint, int model) {
   }
 }
 
-template <typename T>
-void test_int_fetch_add(T &aint, T &iint) {
-  static constexpr T val = V >> right_shift<T>();
+TYPED_TEST(ALUAlignedTest, FetchAdd) {
+  static constexpr TypeParam val = V >> right_shift<TypeParam>();
   std::vector<std::thread> pool;
   for (int model : atomic_fetch_models) {
-    aint = 0;
-    iint = 0;
+    TypeParam aint = 0, iint = 0;
     for (int n = 0; n < kThreads; ++n)
-      pool.emplace_back(looper_int_fetch_add<T>, &aint, std::ref(iint), model);
+      pool.emplace_back(looper_int_fetch_add<TypeParam>, &aint, std::ref(iint),
+                        model);
     for (int n = 0; n < kThreads; ++n)
       pool[n].join();
     pool.clear();
     std::cout << "FETCH ADD: "
               << "atomic: " << aint << " "
               << "nonatomic: " << iint << "\n";
-    if (lt(aint, iint) || aint != val * kExpected)
-      fail();
+    EXPECT_GE(aint, iint);
+    EXPECT_EQ(aint, kExpected * val);
   }
 }
 
@@ -93,23 +104,22 @@ void looper_int_fetch_sub(T *aint, T &iint, int model) {
   }
 }
 
-template <typename T>
-void test_int_fetch_sub(T &aint, T &iint) {
-  static constexpr T val = V >> right_shift<T>();
+TYPED_TEST(ALUAlignedTest, FetchSub) {
+  static constexpr TypeParam val = V >> right_shift<TypeParam>();
   std::vector<std::thread> pool;
   for (int model : atomic_fetch_models) {
-    aint = val * kExpected;
-    iint = val * kExpected;
+    TypeParam aint = val * kExpected, iint = val * kExpected;
     for (int n = 0; n < kThreads; ++n)
-      pool.emplace_back(looper_int_fetch_sub<T>, &aint, std::ref(iint), model);
+      pool.emplace_back(looper_int_fetch_sub<TypeParam>, &aint, std::ref(iint),
+                        model);
     for (int n = 0; n < kThreads; ++n)
       pool[n].join();
     pool.clear();
     std::cout << "FETCH SUB: "
               << "atomic: " << aint << " "
               << "nonatomic: " << iint << "\n";
-    if (lt(iint, aint) || aint != 0)
-      fail();
+    EXPECT_GE(iint, aint);
+    EXPECT_EQ(aint, 0);
   }
 }
 
@@ -142,23 +152,21 @@ void __attribute__((optnone)) looper_int_fetch_and(
   }
 }
 
-template <typename T>
-void test_int_fetch_and(T &aint, T &iint) {
+TYPED_TEST(ALUAlignedTest, FetchAnd) {
   std::vector<std::thread> pool;
   for (int model : atomic_fetch_models) {
-    T acnt = 0, icnt = 0;
-    aint = ~0, iint = ~0;
+    TypeParam acnt = 0, icnt = 0;
+    TypeParam aint = ~0, iint = ~0;
     for (int n = 0; n < kThreads; ++n)
-      pool.emplace_back(looper_int_fetch_and<T>, n, &aint, std::ref(iint),
-                        &acnt, &icnt, model);
+      pool.emplace_back(looper_int_fetch_and<TypeParam>, n, &aint,
+                        std::ref(iint), &acnt, &icnt, model);
     for (int n = 0; n < kThreads; ++n)
       pool[n].join();
     pool.clear();
     std::cout << "FETCH AND: "
               << "atomic: " << acnt << " "
               << "nonatomic: " << icnt << "\n";
-    if (acnt != kExpected)
-      fail();
+    EXPECT_EQ(acnt, kExpected);
   }
 }
 
@@ -184,23 +192,21 @@ void __attribute__((optnone)) looper_int_fetch_or(
   }
 }
 
-template <typename T>
-void test_int_fetch_or(T &aint, T &iint) {
+TYPED_TEST(ALUAlignedTest, FetchOr) {
   std::vector<std::thread> pool;
   for (int model : atomic_fetch_models) {
-    T acnt = 0, icnt = 0;
-    aint = 0, iint = 0;
+    TypeParam acnt = 0, icnt = 0;
+    TypeParam aint = 0, iint = 0;
     for (int n = 0; n < kThreads; ++n)
-      pool.emplace_back(looper_int_fetch_or<T>, n, &aint, std::ref(iint),
-                        &acnt, &icnt, model);
+      pool.emplace_back(looper_int_fetch_or<TypeParam>, n, &aint,
+                        std::ref(iint), &acnt, &icnt, model);
     for (int n = 0; n < kThreads; ++n)
       pool[n].join();
     pool.clear();
     std::cout << "FETCH OR: "
               << "atomic: " << acnt << " "
               << "nonatomic: " << icnt << "\n";
-    if (acnt != kExpected)
-      fail();
+    EXPECT_EQ(acnt, kExpected);
   }
 }
 
@@ -212,47 +218,43 @@ void looper_int_fetch_xor(T *aint, T &iint, int model) {
   }
 }
 
-template <typename T>
-void test_int_fetch_xor(T &aint, T &iint) {
+TYPED_TEST(ALUAlignedTest, FetchXor) {
   std::vector<std::thread> pool;
   for (int model : atomic_fetch_models) {
-    aint = 0;
-    iint = 0;
+    TypeParam aint = 0, iint = 0;
     for (int n = 0; n < kThreads; ++n)
-      pool.emplace_back(looper_int_fetch_xor<T>, &aint, std::ref(iint), model);
+      pool.emplace_back(looper_int_fetch_xor<TypeParam>, &aint, std::ref(iint),
+                        model);
     for (int n = 0; n < kThreads; ++n)
       pool[n].join();
     pool.clear();
     std::cout << "FETCH XOR: "
               << "atomic: " << aint << " "
               << "nonatomic: " << iint << "\n";
-    if (aint != 0)
-      fail();
+    EXPECT_EQ(aint, 0);
   }
 }
 
-template <typename T>
-void test_int_xchg(T &aint, T &iint) {
-  static constexpr T val = V >> right_shift<T>();
+TYPED_TEST(IntAlignedTest, Xchg) {
+  static constexpr TypeParam val = V >> right_shift<TypeParam>();
   std::vector<std::thread> pool;
   for (int model : atomic_exchange_models) {
-    aint = 0;
-    iint = 0;
+    TypeParam aint = 0, iint = 0;
     for (int n = 0; n < kThreads; ++n)
-      pool.emplace_back(looper_numeric_xchg_atomic<T>, &aint, model);
+      pool.emplace_back(looper_numeric_xchg_atomic<TypeParam>, &aint, model);
     for (int n = 0; n < kThreads; ++n)
       pool[n].join();
     pool.clear();
     for (int n = 0; n < kThreads; ++n)
-      pool.emplace_back(looper_numeric_xchg_nonatomic<T>, std::ref(iint),
-                        model);
+      pool.emplace_back(looper_numeric_xchg_nonatomic<TypeParam>,
+                        std::ref(iint), model);
     for (int n = 0; n < kThreads; ++n)
       pool[n].join();
     pool.clear();
     std::cout << "XCHG: ";
     print_int(aint, iint);
-    if (lt(aint, iint) || aint != val * kExpected)
-      fail();
+    EXPECT_GE(aint, iint);
+    EXPECT_EQ(aint, val * kExpected);
   }
 }
 
@@ -271,23 +273,21 @@ void looper_int_xchg_n(T *aint, int model) {
   __atomic_fetch_sub(aint, static_cast<T>(error), model);
 }
 
-template <typename T>
-void test_int_xchg_n(T &aint, T &iint) {
-  static constexpr T val = V >> right_shift<T>();
+TYPED_TEST(IntAlignedTest, XchgN) {
+  static constexpr TypeParam val = V >> right_shift<TypeParam>();
   std::vector<std::thread> pool;
   for (int model : atomic_exchange_models) {
-    aint = 0;
-    iint = 0;
+    TypeParam aint = 0, iint = 0;
     for (int n = 0; n < kThreads; ++n) {
-      pool.emplace_back(looper_int_xchg_n<T>, &aint, model);
+      pool.emplace_back(looper_int_xchg_n<TypeParam>, &aint, model);
     }
     for (int n = 0; n < kThreads; ++n) {
       pool[n].join();
     }
     pool.clear();
     for (int n = 0; n < kThreads; ++n) {
-      pool.emplace_back(looper_numeric_xchg_nonatomic<T>, std::ref(iint),
-                        model);
+      pool.emplace_back(looper_numeric_xchg_nonatomic<TypeParam>,
+                        std::ref(iint), model);
     }
     for (int n = 0; n < kThreads; ++n) {
       pool[n].join();
@@ -295,23 +295,20 @@ void test_int_xchg_n(T &aint, T &iint) {
     pool.clear();
     std::cout << "XCHG_N: ";
     print_int(aint, iint);
-    if (lt(aint, iint) || aint != val * kExpected) {
-      fail();
-    }
+    EXPECT_GE(aint, iint);
+    EXPECT_EQ(aint, val * kExpected);
   }
 }
 
-template <typename T>
-void test_int_cmpxchg(T &aint, T &iint) {
-  static constexpr T val = V >> right_shift<T>();
+TYPED_TEST(IntAlignedTest, Cmpxchg) {
+  static constexpr TypeParam val = V >> right_shift<TypeParam>();
   std::vector<std::thread> pool;
   for (int success_model : atomic_compare_exchange_models) {
     for (int fail_model : atomic_compare_exchange_models) {
-      aint = 0;
-      iint = 0;
+      TypeParam aint = 0, iint = 0;
       for (int n = 0; n < kThreads; ++n) {
-        pool.emplace_back(looper_numeric_cmpxchg<T>, &aint, std::ref(iint),
-                          success_model, fail_model);
+        pool.emplace_back(looper_numeric_cmpxchg<TypeParam>, &aint,
+                          std::ref(iint), success_model, fail_model);
       }
       for (int n = 0; n < kThreads; ++n) {
         pool[n].join();
@@ -319,9 +316,8 @@ void test_int_cmpxchg(T &aint, T &iint) {
       pool.clear();
       std::cout << "CMPXCHG: ";
       print_int(aint, iint);
-      if (lt(aint, iint) || aint != static_cast<T>(val) * kExpected) {
-        fail();
-      }
+      EXPECT_GE(aint, iint);
+      EXPECT_EQ(aint, static_cast<TypeParam>(val) * kExpected);
     }
   }
 }
@@ -340,17 +336,15 @@ void looper_int_cmpxchg_n(T *aint, T &iint, int success_model, int fail_model) {
   }
 }
 
-template <typename T>
-void test_int_cmpxchg_n(T &aint, T &iint) {
-  static constexpr T val = V >> right_shift<T>();
+TYPED_TEST(IntAlignedTest, CmpxchgN) {
+  static constexpr TypeParam val = V >> right_shift<TypeParam>();
   std::vector<std::thread> pool;
   for (int success_model : atomic_compare_exchange_models) {
     for (int fail_model : atomic_compare_exchange_models) {
-      aint = 0;
-      iint = 0;
+      TypeParam aint = 0, iint = 0;
       for (int n = 0; n < kThreads; ++n) {
-        pool.emplace_back(looper_int_cmpxchg_n<T>, &aint, std::ref(iint),
-                          success_model, fail_model);
+        pool.emplace_back(looper_int_cmpxchg_n<TypeParam>, &aint,
+                          std::ref(iint), success_model, fail_model);
       }
       for (int n = 0; n < kThreads; ++n) {
         pool[n].join();
@@ -358,56 +352,8 @@ void test_int_cmpxchg_n(T &aint, T &iint) {
       pool.clear();
       std::cout << "CMPXCHG_N: ";
       print_int(aint, iint);
-      if (lt(aint, iint) || aint != static_cast<T>(val) * kExpected) {
-        fail();
-      }
+      EXPECT_GE(aint, iint);
+      EXPECT_EQ(aint, static_cast<TypeParam>(val) * kExpected);
     }
   }
-}
-
-void test_aligned_int() {
-#define INT_SUITE(type)                    \
-  {                                        \
-    printf("Testing aligned " #type "\n"); \
-    type aint = 0;                         \
-    type iint = 0;                         \
-    test_int_fetch_add<type>(aint, iint);  \
-    test_int_fetch_sub<type>(aint, iint);  \
-    test_int_fetch_and<type>(aint, iint);  \
-    test_int_fetch_or<type>(aint, iint);   \
-    test_int_fetch_xor<type>(aint, iint);  \
-    test_int_xchg<type>(aint, iint);       \
-    test_int_xchg_n<type>(aint, iint);     \
-    test_int_cmpxchg<type>(aint, iint);    \
-    test_int_cmpxchg_n<type>(aint, iint);  \
-  }
-  INT_SUITE(uint32_t);
-  INT_SUITE(uint64_t);
-  INT_SUITE(int32_t);
-  INT_SUITE(int64_t);
-#undef INT_SUITE
-
-#if TEST16
-#define INT_SUITE(type)                    \
-  {                                        \
-    printf("Testing aligned " #type "\n"); \
-    type aint = 0;                         \
-    type iint = 0;                         \
-    test_int_xchg<type>(aint, iint);       \
-    test_int_xchg_n<type>(aint, iint);     \
-    test_int_cmpxchg<type>(aint, iint);    \
-    test_int_cmpxchg_n<type>(aint, iint);  \
-  }
-  INT_SUITE(__uint128_t);
-  INT_SUITE(__int128_t);
-#undef INT_SUITE
-#endif
-}
-
-int main() {
-  printf("%d threads; %d iterations each; total of %d\n", kThreads, kIterations,
-         kExpected);
-
-  test_aligned_int();
-  printf("PASSED\n");
 }

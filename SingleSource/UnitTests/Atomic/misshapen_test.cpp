@@ -47,12 +47,21 @@
 #include <thread>
 #include <vector>
 
+#include "gtest/gtest.h"
 #include "util.h"
 
 template<int N>
 struct misshapen {
   unsigned char v[N];
 };
+
+template <typename T>
+class MisshapenTest : public ::testing::Test {};
+using MisshapenTestTypes = ::testing::Types<
+    misshapen<3>, misshapen<5>, misshapen<6>, misshapen<7>, misshapen<9>,
+    misshapen<10>, misshapen<11>, misshapen<12>, misshapen<13>, misshapen<14>,
+    misshapen<15>>;
+TYPED_TEST_SUITE(MisshapenTest, MisshapenTestTypes);
 
 // See numeric.h for an explanation of numeric xchg tests.
 template <int N>
@@ -108,13 +117,12 @@ void looper_misshapen_xchg_nonatomic(misshapen<N> &mmis, int model) {
                                       model, model));
 }
 
-template <int N>
-void test_misshapen_xchg() {
+TYPED_TEST(MisshapenTest, Xchg) {
   std::vector<std::thread> pool;
+  const int N = sizeof(TypeParam);
 
   for (int model : atomic_exchange_models) {
-    misshapen<N> amis = {};
-    misshapen<N> mmis = {};
+    TypeParam amis = {}, mmis = {};
     for (int n = 0; n < kThreads; ++n)
       pool.emplace_back(looper_misshapen_xchg_atomic<N>, &amis, model);
     for (int n = 0; n < kThreads; ++n)
@@ -136,8 +144,7 @@ void test_misshapen_xchg() {
       std::cout << unsigned(mmis.v[n]) << " ";
     std::cout << "\n";
     for (int n = 0; n < N; ++n)
-      if (amis.v[n] != kExpected % (1 << (8 * sizeof(amis.v[0]))))
-        fail();
+      EXPECT_EQ(amis.v[n], kExpected % (1 << (8 * sizeof(amis.v[0]))));
   }
 }
 
@@ -158,14 +165,13 @@ void looper_misshapen_cmpxchg(misshapen<N> *amis, misshapen<N> &mmis,
   }
 }
 
-template <int N>
-void test_misshapen_cmpxchg() {
+TYPED_TEST(MisshapenTest, Cmpxchg) {
   std::vector<std::thread> pool;
+  const int N = sizeof(TypeParam);
 
   for (int success_model : atomic_compare_exchange_models) {
     for (int fail_model : atomic_compare_exchange_models) {
-      misshapen<N> amis = {};
-      misshapen<N> mmis = {};
+      TypeParam amis = {}, mmis = {};
       for (int n = 0; n < kThreads; ++n)
         pool.emplace_back(looper_misshapen_cmpxchg<N>, &amis, std::ref(mmis),
                           success_model, fail_model);
@@ -182,54 +188,7 @@ void test_misshapen_cmpxchg() {
         std::cout << unsigned(mmis.v[n]) << " ";
       std::cout << "\n";
       for (int n = 0; n < N; ++n)
-        if (amis.v[n] != kExpected % (1 << (8 * sizeof(amis.v[0]))))
-          fail();
+        EXPECT_EQ(amis.v[n], kExpected % (1 << (8 * sizeof(amis.v[0]))));
     }
   }
-}
-
-void test_misshapen() {
-  printf("Testing misshapen 3 byte\n");
-  test_misshapen_xchg<3>();
-  test_misshapen_cmpxchg<3>();
-  // Skip 4.
-  printf("Testing misshapen 5 byte\n");
-  test_misshapen_xchg<5>();
-  test_misshapen_cmpxchg<5>();
-  printf("Testing misshapen 6 byte\n");
-  test_misshapen_xchg<6>();
-  test_misshapen_cmpxchg<6>();
-  printf("Testing misshapen 7 byte\n");
-  test_misshapen_xchg<7>();
-  test_misshapen_cmpxchg<7>();
-  // Skip 8.
-  printf("Testing misshapen 9 byte\n");
-  test_misshapen_xchg<9>();
-  test_misshapen_cmpxchg<9>();
-  printf("Testing misshapen 10 byte\n");
-  test_misshapen_xchg<10>();
-  test_misshapen_cmpxchg<10>();
-  printf("Testing misshapen 11 byte\n");
-  test_misshapen_xchg<11>();
-  test_misshapen_cmpxchg<11>();
-  printf("Testing misshapen 12 byte\n");
-  test_misshapen_xchg<12>();
-  test_misshapen_cmpxchg<12>();
-  printf("Testing misshapen 13 byte\n");
-  test_misshapen_xchg<13>();
-  test_misshapen_cmpxchg<13>();
-  printf("Testing misshapen 14 byte\n");
-  test_misshapen_xchg<14>();
-  test_misshapen_cmpxchg<14>();
-  printf("Testing misshapen 15 byte\n");
-  test_misshapen_xchg<15>();
-  test_misshapen_cmpxchg<15>();
-}
-
-int main() {
-  printf("%d threads; %d iterations each; total of %d\n", kThreads, kIterations,
-         kExpected);
-
-  test_misshapen();
-  printf("PASSED\n");
 }

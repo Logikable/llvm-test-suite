@@ -1,9 +1,0 @@
-10 threads; 1000000 iterations each; total of 10000000
-Testing float
-SCALAR (FETCH ADD): atomic: 6.50116e+08 nonatomic: 6.6e+07
-SCALAR (FETCH ADD): atomic: 6.41017e+08 nonatomic: 5.8511e+08
-Testing double
-SCALAR (FETCH ADD): atomic: 2.84596e+18 nonatomic: 2.84596e+17
-SCALAR (FETCH ADD): atomic: 2.84596e+18 nonatomic: 2.5513e+18
-PASSED
-exit 0

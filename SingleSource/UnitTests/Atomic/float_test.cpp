@@ -48,80 +48,64 @@
 #include <thread>
 #include <vector>
 
+#include "gtest/gtest.h"
 #include "numeric.h"
 #include "util.h"
 
-// See numeric.h for an explanation of numeric xchg tests.
 template <typename T>
-void test_float_scalar_xchg() {
-  static constexpr T val = V >> right_shift<T>();
-  static constexpr T expected = val * kExpected;
+class ScalarFloatTest : public ::testing::Test {};
+using ScalarFloatTestTypes = ::testing::Types<float, double>;
+TYPED_TEST_SUITE(ScalarFloatTest, ScalarFloatTestTypes);
+
+// See numeric.h for an explanation of numeric xchg tests.
+TYPED_TEST(ScalarFloatTest, Xchg) {
+  static constexpr TypeParam val = V >> right_shift<TypeParam>();
+  static constexpr TypeParam expected = val * kExpected;
   std::vector<std::thread> pool;
 
   for (int model : atomic_exchange_models) {
-    T afloat = 0;
-    T ffloat = 0;
+    TypeParam afloat = 0, ffloat = 0;
     for (int n = 0; n < kThreads; ++n)
-      pool.emplace_back(looper_numeric_xchg_atomic<T>, &afloat, model);
+      pool.emplace_back(looper_numeric_xchg_atomic<TypeParam>, &afloat, model);
     for (int n = 0; n < kThreads; ++n)
       pool[n].join();
     pool.clear();
     for (int n = 0; n < kThreads; ++n)
-      pool.emplace_back(looper_numeric_xchg_nonatomic<T>, std::ref(ffloat),
-                        model);
+      pool.emplace_back(looper_numeric_xchg_nonatomic<TypeParam>,
+                        std::ref(ffloat), model);
     for (int n = 0; n < kThreads; ++n)
       pool[n].join();
     pool.clear();
     std::cout << "SCALAR (FETCH ADD): "
               << "atomic: " << afloat << " "
               << "nonatomic: " << ffloat << "\n";
-    if (lt(afloat, ffloat) || afloat < expected * (1 - kEpsilon) ||
-        afloat > expected * (1 + kEpsilon))
-      fail();
+    EXPECT_GE(afloat, ffloat);
+    EXPECT_GE(afloat, expected * (1 - kEpsilon));
+    EXPECT_LE(afloat, expected * (1 + kEpsilon));
   }
 }
 
 // See numeric.h for an explanation of numeric cmpxchg tests.
-template <typename T>
-void test_float_scalar_cmpxchg() {
-  static constexpr T val = V >> right_shift<T>();
-  static constexpr T expected = val * kExpected;
+TYPED_TEST(ScalarFloatTest, Cmpxchg) {
+  static constexpr TypeParam val = V >> right_shift<TypeParam>();
+  static constexpr TypeParam expected = val * kExpected;
   std::vector<std::thread> pool;
 
   for (int success_model : atomic_compare_exchange_models) {
     for (int fail_model : atomic_compare_exchange_models) {
-      T afloat = 0;
-      T ffloat = 0;
+      TypeParam afloat = 0, ffloat = 0;
       for (int n = 0; n < kThreads; ++n)
-        pool.emplace_back(looper_numeric_cmpxchg<T>, &afloat, std::ref(ffloat),
-                          success_model, fail_model);
+        pool.emplace_back(looper_numeric_cmpxchg<TypeParam>, &afloat,
+                          std::ref(ffloat), success_model, fail_model);
       for (int n = 0; n < kThreads; ++n)
         pool[n].join();
       pool.clear();
       std::cout << "SCALAR (FETCH ADD): "
                 << "atomic: " << afloat << " "
                 << "nonatomic: " << ffloat << "\n";
-      if (lt(afloat, ffloat) || afloat < expected * (1 - kEpsilon) ||
-          afloat > expected * (1 + kEpsilon))
-        fail();
+      EXPECT_GE(afloat, ffloat);
+      EXPECT_GE(afloat, expected * (1 - kEpsilon));
+      EXPECT_LE(afloat, expected * (1 + kEpsilon));
     }
   }
-}
-
-void test_floating_point() {
-  printf("Testing float\n");
-  test_float_scalar_xchg<float>();
-  test_float_scalar_cmpxchg<float>();
-
-  printf("Testing double\n");
-  test_float_scalar_xchg<double>();
-  test_float_scalar_cmpxchg<double>();
-}
-
-int main() {
-  printf("%d threads; %d iterations each; total of %d\n", kThreads, kIterations,
-         kExpected);
-
-  test_floating_point();
-  printf("PASSED\n");
 }

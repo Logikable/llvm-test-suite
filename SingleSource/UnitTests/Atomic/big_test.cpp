@@ -47,12 +47,15 @@
 #include <thread>
 #include <vector>
 
+#include "gtest/gtest.h"
 #include "util.h"
 
 static constexpr int kBigSize = 10;
 struct big_t {
   int v[kBigSize];
 };
+
+class BigTest : public ::testing::Test {};
 
 // The big struct cmpxchg test is identical to the numeric cmpxchg test, except
 // each element of the underlying array is incremented.
@@ -71,13 +74,12 @@ void looper_big_cmpxchg(big_t *abig, big_t &bbig, int success_model,
   }
 }
 
-void test_big_cmpxchg() {
+TEST_F(BigTest, Cmpxchg) {
   std::vector<std::thread> pool;
 
   for (int success_model : atomic_compare_exchange_models) {
     for (int fail_model : atomic_compare_exchange_models) {
-      big_t abig = {};
-      big_t bbig = {};
+      big_t abig = {}, bbig = {};
       for (int n = 0; n < kThreads; ++n)
         pool.emplace_back(looper_big_cmpxchg, &abig, std::ref(bbig),
                           success_model, fail_model);
@@ -93,22 +95,10 @@ void test_big_cmpxchg() {
       for (int n = 0; n < kBigSize; ++n)
         std::cout << bbig.v[n] << " ";
       std::cout << "\n";
-      for (int n = 0; n < kBigSize; ++n)
-        if (lt(abig.v[n], bbig.v[n]) || abig.v[n] != kExpected)
-          fail();
+      for (int n = 0; n < kBigSize; ++n) {
+        EXPECT_GE(abig.v[n], bbig.v[n]);
+        EXPECT_EQ(abig.v[n], kExpected);
+      }
     }
   }
-}
-
-void test_big() {
-  printf("Testing big\n");
-  test_big_cmpxchg();
-}
-
-int main() {
-  printf("%d threads; %d iterations each; total of %d\n", kThreads, kIterations,
-         kExpected);
-
-  test_big();
-  printf("PASSED\n");
 }

@@ -10,7 +10,6 @@
 #define _UTIL_H_
 
 #include <cstdint>
-#include <cstdlib>
 #include <iostream>
 
 #define TEST16 1
@@ -43,16 +42,6 @@ constexpr int atomic_compare_exchange_models[] = {
   // __ATOMIC_ACQ_REL, __ATOMIC_RELEASE,
   __ATOMIC_SEQ_CST,
 };
-
-inline void fail() {
-  std::cout << "FAILED\n";
-  exit(1);
-}
-
-template <typename T>
-bool lt(T a, T b) {
-  return a < b;
-}
 
 template <typename T>
 constexpr uint8_t right_shift() {
